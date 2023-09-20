@@ -1,3 +1,4 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:mirror_wall/Providers/Bookmark%20Provider.dart';
@@ -5,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 late SharedPreferences sp;
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
@@ -50,6 +52,7 @@ class _MyHomePageState extends State<MyHomePage> {
   double progress = 0;
   int searchEngine = 1;
   String uri = 'https://www.google.co.in/';
+  var subscription;
 
   @override
   void initState() {
@@ -61,12 +64,23 @@ class _MyHomePageState extends State<MyHomePage> {
         webViewController?.reload();
       },
     );
+
+    subscription = Connectivity()
+        .onConnectivityChanged
+        .listen((ConnectivityResult result) {});
+
     super.initState();
   }
 
   @override
+  dispose() {
+    subscription.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    var bookPro = Provider.of<BookMarkProvider>(context,listen: false);
+    var bookPro = Provider.of<BookMarkProvider>(context, listen: false);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -106,38 +120,55 @@ class _MyHomePageState extends State<MyHomePage> {
                           Consumer<BookMarkProvider>(
                             builder: (context, bookProValue, child) {
                               return Expanded(
-                                child: bookProValue.bookmark.isEmpty
-                                    ? Container(
-                                        alignment: Alignment.center,
-                                        child:
-                                            const Text('No any Bookmark yet...'),
-                                      )
-                                    : ListView.builder(
-                                        itemCount: bookProValue.bookmark.length,
-                                        itemBuilder: (context, index) {
-                                          return ListTile(
-                                            onTap: () {
-                                              setState(() {
-                                                webViewController?.loadUrl(urlRequest: URLRequest(url: Uri.parse(bookProValue.bookmark[index]['Url']??'')));
-                                              });
-                                              Navigator.pop(context);
-                                            },
-                                            title: Text(
-                                              bookProValue.bookmark[index]['Title'] ?? '',
-                                              style: const TextStyle(
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                            subtitle: Text(
-                                                bookProValue.bookmark[index]['Url'] ?? '',maxLines: 2,overflow: TextOverflow.ellipsis,),
-                                            trailing: IconButton(
-                                              icon: const Icon(Icons.close),
-                                              onPressed: () {
-                                                bookProValue.removeFromBookMark(index);
+                                  child: bookProValue.bookmark.isEmpty
+                                      ? Container(
+                                          alignment: Alignment.center,
+                                          child: const Text(
+                                              'No any Bookmark yet...'),
+                                        )
+                                      : ListView.builder(
+                                          itemCount:
+                                              bookProValue.bookmark.length,
+                                          itemBuilder: (context, index) {
+                                            return ListTile(
+                                              onTap: () {
+                                                setState(() {
+                                                  webViewController?.loadUrl(
+                                                      urlRequest: URLRequest(
+                                                          url: Uri.parse(
+                                                              bookProValue.bookmark[
+                                                                          index]
+                                                                      ['Url'] ??
+                                                                  '')));
+                                                });
+                                                Navigator.pop(context);
                                               },
-                                            ),
-                                          );
-                                        },
-                                      ));
+                                              title: Text(
+                                                bookProValue.bookmark[index]
+                                                        ['Title'] ??
+                                                    '',
+                                                style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                              subtitle: Text(
+                                                bookProValue.bookmark[index]
+                                                        ['Url'] ??
+                                                    '',
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              trailing: IconButton(
+                                                icon: const Icon(Icons.close),
+                                                onPressed: () {
+                                                  bookProValue
+                                                      .removeFromBookMark(
+                                                          index);
+                                                },
+                                              ),
+                                            );
+                                          },
+                                        ));
                             },
                           )
                         ],
@@ -255,18 +286,27 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Column(
         children: [
           Expanded(
-            child: InAppWebView(
-              onWebViewCreated: (controller) {
-                webViewController = controller;
-              },
-              initialUrlRequest: URLRequest(url: Uri.parse(uri)),
-              pullToRefreshController: pullToRefreshController,
-              onProgressChanged: (controller, progress) {
-                setState(() {
-                  this.progress = progress / 100;
-                });
-              },
-            ),
+            child: StreamBuilder<ConnectivityResult>(
+                stream: Connectivity().onConnectivityChanged,
+                builder: (context, snapshot) {
+                  return snapshot.data != ConnectivityResult.none
+                      ? InAppWebView(
+                          onWebViewCreated: (controller) {
+                            webViewController = controller;
+                          },
+                          initialUrlRequest: URLRequest(url: Uri.parse(uri)),
+                          pullToRefreshController: pullToRefreshController,
+                          onProgressChanged: (controller, progress) {
+                            setState(() {
+                              this.progress = progress / 100;
+                            });
+                          },
+                        )
+                      : Container(
+                          alignment: Alignment.center,
+                          child: const Text('No Internet Connection'),
+                        );
+                }),
           ),
           Container(
             color: Colors.white,
