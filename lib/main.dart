@@ -64,11 +64,6 @@ class _MyHomePageState extends State<MyHomePage> {
         webViewController?.reload();
       },
     );
-
-    subscription = Connectivity()
-        .onConnectivityChanged
-        .listen((ConnectivityResult result) {});
-
     super.initState();
   }
 
