@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:mirror_wall/Providers/Bookmark%20Provider.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+late SharedPreferences sp;
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
