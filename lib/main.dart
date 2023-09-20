@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:mirror_wall/Providers/Bookmark%20Provider.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+late SharedPreferences sp;
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
@@ -74,10 +76,13 @@ class _MyHomePageState extends State<MyHomePage> {
           PopupMenuButton(
             onSelected: (value) {
               if (value == 1) {
+                bookPro.getSp();
                 // show bookmarks
                 showModalBottomSheet(
                   shape: const UnderlineInputBorder(),
-                  isDismissible: false,
+                  // isDismissible: false,
+                  useSafeArea: true,
+                  isScrollControlled: true,
                   context: context,
                   builder: (context) {
                     return SizedBox(
@@ -123,7 +128,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                                   fontWeight: FontWeight.bold),
                                             ),
                                             subtitle: Text(
-                                                bookProValue.bookmark[index]['Url'] ?? ''),
+                                                bookProValue.bookmark[index]['Url'] ?? '',maxLines: 2,overflow: TextOverflow.ellipsis,),
                                             trailing: IconButton(
                                               icon: const Icon(Icons.close),
                                               onPressed: () {
